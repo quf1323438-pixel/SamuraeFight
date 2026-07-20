@@ -33,9 +33,11 @@ public class PlayerMove : MonoBehaviour
     public float DashForce;
     public float PlayerDir;
 
-
     //상태 머신 변수
     public IPlayerState currentState;
+
+    //입력 (조종자 - 지금은 키보드, 나중엔 AI도 꽂을 수 있음)
+    public IPlayerInput input;
 
 
     void Awake()
@@ -45,7 +47,8 @@ public class PlayerMove : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         col = GetComponent<BoxCollider2D>();
         currentState = new NolmarState();
-        standGravity = rb.gravityScale; 
+        input = new KeyboardInput();
+        standGravity = rb.gravityScale;
     }
 
     void Start()
@@ -64,12 +67,17 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
+        //① 감각 수집 - 입력과 바닥 감지를 먼저
+        input.Tick();
+        isGround = Physics2D.BoxCast(transform.position, boxsize, 0f, Vector2.down, 0.1f, Lground);
+
+        //② 판단은 상태에게
         currentState.Update(this);
-        
+
         //플레이어 쿨타임 관리
         Dashcooltime_ -= Time.deltaTime;
 
-        // 플레이어가 바라보는 방향 
+        // 플레이어가 바라보는 방향
         if (movement != 0) PlayerDir = movement;
     }
     void FixedUpdate() { currentState.FixedUpdate(this);}
